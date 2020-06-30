@@ -76,26 +76,51 @@ class LeadsDataTable extends BaseDataTable
                 return '<a href="' . route('admin.leads.sms-portal', $row->id) . '">' . $row->client_name . '</a><div class="clearfix"></div> ' . $label;
             })
             ->editColumn('next_follow_up_date', function ($row) use ($currentDate) {
-                if ($row->next_follow_up_date != null && $row->next_follow_up_date != '') {
-                    $date = Carbon::parse($row->next_follow_up_date)->format($this->global->date_format);
-                } else {
-                    $date = '--';
-                }
-                if ($row->next_follow_up_date < $currentDate && $date != '--') {
-                    return $date . ' <label class="badge badge-warning" data-placement="right" title="" data-original-title="Pending Followup" style="width: 75px;">' . __('app.pending') . '</label>';
-                }
+                // if ($row->next_follow_up_date != null && $row->next_follow_up_date != '') {
+                //     $date = Carbon::parse($row->next_follow_up_date)->format($this->global->date_format);
+                // } else {
+                //     $date = '--';
+                // }
+                // if ($row->next_follow_up_date < $currentDate && $date != '--') {
+                //     return $date . ' <label class="badge badge-warning" data-placement="right" title="" data-original-title="Pending Followup" style="width: 75px;">' . __('app.pending') . '</label>';
+                // }
 
-                return $date;
+                // return $date;
+                $date1 = strtotime(date('Y-m-d h:i:s'));
+                $date2 = strtotime($row->next_follow_up_date);
+                if($row->contact_date == "") return "";
+                else {
+                    $hours = floor(abs($date2 - $date1)/(60*60));
+                    $status = "";
+                    if($hours <= 24) {
+                        return '<span class="badge badge-success" style="width: 75px;">' . __('Normal') . '</span>';
+                    } 
+                    if($hours > 24 && $hours <= 48) {
+                        return '<span class="badge badge-warning" style="width: 75px;">' . __('Warning') . '</span>';
+                    }
+                    if($hours > 48 ) {
+                        return '<span class="badge badge-danger" style="width: 75px;">' . __('Danger') . '</span>';
+                    }
+                }
             })
             ->editColumn('contact_date', function($row) {
                 $date1 = strtotime(date('Y-m-d h:i:s'));  
                 $date2 = strtotime($row->contact_date);
-                $hours = floor(abs($date2 - $date1)/(60*60));
-                $status = "";
-                if($hours <= 24) $status = "green";
-                if($hours > 24 && $hours <= 48) $status = "yellow";
-                if($hours > 48 ) $status = "red";
-                return $status; 
+                if($row->contact_date == "") return "";
+                else {
+                    $hours = floor(abs($date2 - $date1)/(60*60));
+                    $status = "";
+                    if($hours <= 24) {
+                        return '<span class="badge badge-success" style="width: 75px;">' . __('Normal') . '</span>';
+                    } 
+                    if($hours > 24 && $hours <= 48) {
+                        return '<span class="badge badge-warning" style="width: 75px;">' . __('Warning') . '</span>';
+                    }
+                    if($hours > 48 ) {
+                        return '<span class="badge badge-danger" style="width: 75px;">' . __('Danger') . '</span>';
+                    }
+                }
+                
             })
             ->editColumn('created_at', function ($row) {
                 return $row->created_at->format($this->global->date_format);
