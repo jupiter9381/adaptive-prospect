@@ -84,17 +84,17 @@ Route::group(['middleware' => 'auth'], function () {
         Route::get('leads/follow-up-sort', ['uses' => 'LeadController@followUpSort'])->name('leads.follow-up-sort');
         Route::post('leads/save-consent-purpose-data/{lead}', ['uses' => 'LeadController@saveConsentLeadData'])->name('leads.save-consent-purpose-data');
         Route::get('leads/consent-purpose-data/{lead}', ['uses' => 'LeadController@consentPurposeData'])->name('leads.consent-purpose-data');
-		
-		Route::get('leads/sms-portal/{leadID}', ['uses' => 'LeadController@SMSPortal'])->name('leads.sms-portal');
+        
+        Route::get('leads/sms-portal/{leadID}', ['uses' => 'LeadController@SMSPortal'])->name('leads.sms-portal');
         Route::get('leads/sms-modal/{leadID}', ['uses' => 'LeadController@SMSPortal'])->name('leads.communicationModal.createModal');
         Route::get('leads/communicate/{leadID}', ['uses' => 'LeadController@SMSPortal'])->name('leads.sms-portal');
-		Route::post('leads/call-lead/{leadID}', ['uses' => 'LeadController@sendCall'])->name('leads.call-lead'); 
-		Route::post('leads/call-status', ['uses' => 'LeadController@getCallStatus'])->name('leads.call-status');
-		Route::post('leads/call-hangup', ['uses' => 'LeadController@HangupCall'])->name('leads.call-hangup');
-		Route::post('leads/send-sms/{leadID}', ['uses' => 'LeadController@sendSMS'])->name('leads.send-sms');
-		Route::post('leads/ajax-sms-log/{leadID}', ['uses' => 'LeadController@ajaxSMSLog'])->name('leads.ajax-sms-log');
-		Route::post('leads/send-email/{leadID}', ['uses' => 'LeadController@sendEmail'])->name('leads.send-email'); 
-		Route::post('send-mail', 'MailController@sendMail')->name('mail');
+        Route::post('leads/call-lead/{leadID}', ['uses' => 'LeadController@sendCall'])->name('leads.call-lead'); 
+        Route::post('leads/call-status', ['uses' => 'LeadController@getCallStatus'])->name('leads.call-status');
+        Route::post('leads/call-hangup', ['uses' => 'LeadController@HangupCall'])->name('leads.call-hangup');
+        Route::post('leads/send-sms/{leadID}', ['uses' => 'LeadController@sendSMS'])->name('leads.send-sms');
+        Route::post('leads/ajax-sms-log/{leadID}', ['uses' => 'LeadController@ajaxSMSLog'])->name('leads.ajax-sms-log');
+        Route::post('leads/send-email/{leadID}', ['uses' => 'LeadController@sendEmail'])->name('leads.send-email'); 
+        Route::post('send-mail', 'MailController@sendMail')->name('mail');
         Route::resource('leads', 'LeadController');
 
         // Lead Files

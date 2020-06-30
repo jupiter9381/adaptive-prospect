@@ -87,13 +87,13 @@ class LeadController extends AdminBaseController
         $this->status = LeadStatus::all();
         return view('admin.lead.create', $this->data);
     }
-	
-	/**
+    
+    /**
      * display sms portal.
      *
      * 
      */
-	public function SMSPortal($leadID)
+    public function SMSPortal($leadID)
     {
         $this->lead = Lead::findOrFail($leadID);
         return view('admin.lead.sms-portal', $this->data);
@@ -104,243 +104,243 @@ class LeadController extends AdminBaseController
         $this->lead = Lead::findOrFail($leadID);
         return view('admin.lead.sms-portal', $this->data);
     }
-	
-	/* return sms history in ajax */
-	public function ajaxSMSLog($leadID){
-		
-		$this->lead = Lead::findOrFail($leadID);
-		
-		//getting messages for lead
-		$account_sid = getenv("TWILIO_SID");
-		$auth_token = getenv("TWILIO_AUTH_TOKEN");
-		$twilio_number = getenv("TWILIO_NUMBER");
-		$client = new Client($account_sid, $auth_token);
-		
-		//getting all inbound sms	
-		$inbound_messages = $client->messages
-			->read(
-				array( "from" => $twilio_number ,"to" => $this->lead->mobile)
-				,6000
-			);
-		//formating inbound sms	
-		$inbound_messages = $this->renderSMSRecords($inbound_messages);	
-			
-		//getting all outbound sms	
-		$outbound_messages = $client->messages
-			->read(
-				array( "from" => $this->lead->mobile ,"to" => $twilio_number)
-				,6000
-			);
-		//formating outbound sms		
-		$outbound_messages = $this->renderSMSRecords($outbound_messages);
-			
-			
-		//get all inbound calls	
-		$inbound_calls = $client->calls
-			->read(
-				array( "from" => $twilio_number ,"to" => $this->lead->mobile)
-				,6000
-			);
-		//formating inbound calls	
-		$inbound_calls = $this->renderCallRecords($inbound_calls);	
-		
-		//getting all outbound calls	
-		$outbound_calls = $client->calls
-			->read(
-				array( "from" => $this->lead->mobile ,"to" => $twilio_number)
-				,6000
-			);	
-		//formating outbound calls
-		$outbound_calls = $this->renderCallRecords($outbound_calls);	
+    
+    /* return sms history in ajax */
+    public function ajaxSMSLog($leadID){
+        
+        $this->lead = Lead::findOrFail($leadID);
+        
+        //getting messages for lead
+        $account_sid = getenv("TWILIO_SID");
+        $auth_token = getenv("TWILIO_AUTH_TOKEN");
+        $twilio_number = getenv("TWILIO_NUMBER");
+        $client = new Client($account_sid, $auth_token);
+        
+        //getting all inbound sms   
+        $inbound_messages = $client->messages
+            ->read(
+                array( "from" => $twilio_number ,"to" => $this->lead->mobile)
+                ,6000
+            );
+        //formating inbound sms 
+        $inbound_messages = $this->renderSMSRecords($inbound_messages); 
+            
+        //getting all outbound sms  
+        $outbound_messages = $client->messages
+            ->read(
+                array( "from" => $this->lead->mobile ,"to" => $twilio_number)
+                ,6000
+            );
+        //formating outbound sms        
+        $outbound_messages = $this->renderSMSRecords($outbound_messages);
+            
+            
+        //get all inbound calls 
+        $inbound_calls = $client->calls
+            ->read(
+                array( "from" => $twilio_number ,"to" => $this->lead->mobile)
+                ,6000
+            );
+        //formating inbound calls   
+        $inbound_calls = $this->renderCallRecords($inbound_calls);  
+        
+        //getting all outbound calls    
+        $outbound_calls = $client->calls
+            ->read(
+                array( "from" => $this->lead->mobile ,"to" => $twilio_number)
+                ,6000
+            );  
+        //formating outbound calls
+        $outbound_calls = $this->renderCallRecords($outbound_calls);    
 
-		//get emails
-		$leademailhistory = LeadEmailHistory::where('lead_id', '=', $this->lead->id)->get();
-		//formating emails calls
-		$leademailhistory = $this->renderEmails($leademailhistory);
-			
-		$a = array_merge($outbound_messages, $inbound_messages,$inbound_calls,$outbound_calls,$leademailhistory);
-		$ord = array();
-		foreach ($a as $key => $value){
-			$ord[] = strtotime($value['dateSorting']);
-		}
-		array_multisort($ord, SORT_ASC, $a);
-		$this->data['messages']	= $a;
-		$view = view("admin.lead.ajax-sms-log",$this->data)->render();
-		return response()->json(['html'=>$view]);
-	}
-	
-	private function renderCallRecords($calls){
-		$data = array();
-		if(!empty($calls)){
-			foreach($calls as $call){
-				
-				$row['type'] = 'call';
-				$row['dateSorting'] = $call->dateCreated->format('Y-m-d H:i:s');
-				$row['date'] = $call->dateCreated->format('D, d M Y G:ia');
-				$row['direction'] = $call->direction;
-				$row['from'] = $call->fromFormatted;
-				$row['to'] = $call->toFormatted;
-				
-				if (strpos($call->direction, 'outbound') !== false) {
-					$row['body'] = 'Outgoing Call:';
-				}
-				elseif (strpos($call->direction, 'inbound') !== false) {
-					$row['body'] = 'Incoming Call:';
-				}
-				$row['duration'] = $call->duration;
-				$row['status'] = $call->status;
-				$data[] = $row;
-			}
-		}
-		return $data;
-	}
-	
-	private function renderSMSRecords($messages){
-		$data = array();
-		if(!empty($messages)){
-			foreach($messages as $sms){
-				$row['type'] = 'sms';
-				$row['dateSorting'] = $sms->dateSent->format('Y-m-d H:i:s');
-				$row['date'] = $sms->dateSent->format('D, d M Y G:ia');
-				$row['direction'] = $sms->direction;
-				$row['from'] = $sms->from;
-				$row['to'] = $sms->to;
-				$row['body'] = $sms->body;
-				$row['status'] = $sms->status;
-				
-				$data[] = $row;
-			}
-		}
-		return $data;
-	}
-	
-	
-	private function renderEmails($emails){
-		$data = array();
-		if(!empty($emails)){
-			foreach($emails as $e_mail){
-				//echo '<pre>';print_r($e_mail);exit();
-				$row['type'] = 'email';
-				$row['dateSorting'] = $e_mail->Datesent;
-				$row['date'] = date('D, d M Y G:ia',strtotime($e_mail->Datesent));
-				$row['direction'] = $e_mail->direction;
-				$row['from'] = $e_mail->from;
-				$row['to'] = $e_mail->to;
-				$row['body'] = $e_mail->body;
-				$row['status'] = $e_mail->status;
-				$data[] = $row;
-			}
-		}
-		return $data;
-	}
-	
-	/**
+        //get emails
+        $leademailhistory = LeadEmailHistory::where('lead_id', '=', $this->lead->id)->get();
+        //formating emails calls
+        $leademailhistory = $this->renderEmails($leademailhistory);
+            
+        $a = array_merge($outbound_messages, $inbound_messages,$inbound_calls,$outbound_calls,$leademailhistory);
+        $ord = array();
+        foreach ($a as $key => $value){
+            $ord[] = strtotime($value['dateSorting']);
+        }
+        array_multisort($ord, SORT_ASC, $a);
+        $this->data['messages'] = $a;
+        $view = view("admin.lead.ajax-sms-log",$this->data)->render();
+        return response()->json(['html'=>$view]);
+    }
+    
+    private function renderCallRecords($calls){
+        $data = array();
+        if(!empty($calls)){
+            foreach($calls as $call){
+                
+                $row['type'] = 'call';
+                $row['dateSorting'] = $call->dateCreated->format('Y-m-d H:i:s');
+                $row['date'] = $call->dateCreated->format('D, d M Y G:ia');
+                $row['direction'] = $call->direction;
+                $row['from'] = $call->fromFormatted;
+                $row['to'] = $call->toFormatted;
+                
+                if (strpos($call->direction, 'outbound') !== false) {
+                    $row['body'] = 'Outgoing Call:';
+                }
+                elseif (strpos($call->direction, 'inbound') !== false) {
+                    $row['body'] = 'Incoming Call:';
+                }
+                $row['duration'] = $call->duration;
+                $row['status'] = $call->status;
+                $data[] = $row;
+            }
+        }
+        return $data;
+    }
+    
+    private function renderSMSRecords($messages){
+        $data = array();
+        if(!empty($messages)){
+            foreach($messages as $sms){
+                $row['type'] = 'sms';
+                $row['dateSorting'] = $sms->dateSent->format('Y-m-d H:i:s');
+                $row['date'] = $sms->dateSent->format('D, d M Y G:ia');
+                $row['direction'] = $sms->direction;
+                $row['from'] = $sms->from;
+                $row['to'] = $sms->to;
+                $row['body'] = $sms->body;
+                $row['status'] = $sms->status;
+                
+                $data[] = $row;
+            }
+        }
+        return $data;
+    }
+    
+    
+    private function renderEmails($emails){
+        $data = array();
+        if(!empty($emails)){
+            foreach($emails as $e_mail){
+                //echo '<pre>';print_r($e_mail);exit();
+                $row['type'] = 'email';
+                $row['dateSorting'] = $e_mail->Datesent;
+                $row['date'] = date('D, d M Y G:ia',strtotime($e_mail->Datesent));
+                $row['direction'] = $e_mail->direction;
+                $row['from'] = $e_mail->from;
+                $row['to'] = $e_mail->to;
+                $row['body'] = $e_mail->body;
+                $row['status'] = $e_mail->status;
+                $data[] = $row;
+            }
+        }
+        return $data;
+    }
+    
+    /**
      * send test sms to client.
      *
      * @return \Illuminate\Http\Response
      */
     public function sendSMS($leadID,Request $request)
     {
-		$this->lead = Lead::findOrFail($leadID);
+        $this->lead = Lead::findOrFail($leadID);
         $account_sid = getenv("TWILIO_SID");
-		$auth_token = getenv("TWILIO_AUTH_TOKEN");
-		$twilio_number = getenv("TWILIO_NUMBER");
-		$client = new Client($account_sid, $auth_token);
-		$client->messages->create($this->lead->mobile,['from' => $twilio_number, 'body' => $request->sms_text] );
-		return response()->json(['status'=>'success','message'=>'Message Sent Successfully']);	
+        $auth_token = getenv("TWILIO_AUTH_TOKEN");
+        $twilio_number = getenv("TWILIO_NUMBER");
+        $client = new Client($account_sid, $auth_token);
+        $client->messages->create($this->lead->mobile,['from' => $twilio_number, 'body' => $request->sms_text] );
+        return response()->json(['status'=>'success','message'=>'Message Sent Successfully']);  
     }
-	
-	/**
+    
+    /**
      * send call to lead.
      *
      * 
      */
-	public function sendCall($leadID)
+    public function sendCall($leadID)
     {
         $this->lead = Lead::findOrFail($leadID);
 
-		//getting messages for lead
-		$account_sid = getenv("TWILIO_SID");
-		$auth_token = getenv("TWILIO_AUTH_TOKEN");
-		$twilio_number = getenv("TWILIO_NUMBER");
-		$client = new Client($account_sid, $auth_token);
-		$call = $client->calls
+        //getting messages for lead
+        $account_sid = getenv("TWILIO_SID");
+        $auth_token = getenv("TWILIO_AUTH_TOKEN");
+        $twilio_number = getenv("TWILIO_NUMBER");
+        $client = new Client($account_sid, $auth_token);
+        $call = $client->calls
                ->create($this->lead->mobile, // to
                         $twilio_number, // from
                         array("url" => "http://demo.twilio.com/docs/voice.xml")
                );
-			   
-		return response()->json(['status'=>$call->status,'display_status'=>ucwords($call->status),'sid'=>$call->sid]);	   
-		
+               
+        return response()->json(['status'=>$call->status,'display_status'=>ucwords($call->status),'sid'=>$call->sid]);     
+        
     }
-	
-	
-	/**
+    
+    
+    /**
      * get call status.
      *
      * 
      */
-	public function getCallStatus(Request $request)
+    public function getCallStatus(Request $request)
     {
         $sid = $request->sid;
-		//getting messages for lead
-		$account_sid = getenv("TWILIO_SID");
-		$auth_token = getenv("TWILIO_AUTH_TOKEN");
-		$twilio_number = getenv("TWILIO_NUMBER");
-		$client = new Client($account_sid, $auth_token);
-		$call = $client->calls($sid)->fetch();   
-		return response()->json(['status'=>$call->status,'display_status'=>ucwords($call->status),'sid'=>$call->sid,'duration'=>$call->duration]);	   
-		
+        //getting messages for lead
+        $account_sid = getenv("TWILIO_SID");
+        $auth_token = getenv("TWILIO_AUTH_TOKEN");
+        $twilio_number = getenv("TWILIO_NUMBER");
+        $client = new Client($account_sid, $auth_token);
+        $call = $client->calls($sid)->fetch();   
+        return response()->json(['status'=>$call->status,'display_status'=>ucwords($call->status),'sid'=>$call->sid,'duration'=>$call->duration]);     
+        
     }
-	
-	public function HangupCall(Request $request){
-		$sid = $request->sid;
-		//getting messages for lead
-		$account_sid = getenv("TWILIO_SID");
-		$auth_token = getenv("TWILIO_AUTH_TOKEN");
-		$twilio_number = getenv("TWILIO_NUMBER");
-		$client = new Client($account_sid, $auth_token);
-		$call = $client->calls($sid)->fetch();
-		if($call->status == 'in-progress'){
-			$call = $client->calls($sid)->update(array("status" => "completed")); 
-		}
-		else{
-			$call = $client->calls($sid)->update(array("status" => "canceled")); 
-		}
-		$call = $client->calls($sid)->fetch();  
-		return response()->json(['status'=>$call->status,'display_status'=>ucwords($call->status),'sid'=>$call->sid,'duration'=>$call->duration]);
-	}
+    
+    public function HangupCall(Request $request){
+        $sid = $request->sid;
+        //getting messages for lead
+        $account_sid = getenv("TWILIO_SID");
+        $auth_token = getenv("TWILIO_AUTH_TOKEN");
+        $twilio_number = getenv("TWILIO_NUMBER");
+        $client = new Client($account_sid, $auth_token);
+        $call = $client->calls($sid)->fetch();
+        if($call->status == 'in-progress'){
+            $call = $client->calls($sid)->update(array("status" => "completed")); 
+        }
+        else{
+            $call = $client->calls($sid)->update(array("status" => "canceled")); 
+        }
+        $call = $client->calls($sid)->fetch();  
+        return response()->json(['status'=>$call->status,'display_status'=>ucwords($call->status),'sid'=>$call->sid,'duration'=>$call->duration]);
+    }
 
     
-	public function sendEmail($leadID,Request $request)
-	{  
-		$this->lead = Lead::findOrFail($leadID);
-		$smtp = SmtpSetting::first();
+    public function sendEmail($leadID,Request $request)
+    {  
+        $this->lead = Lead::findOrFail($leadID);
+        $smtp = SmtpSetting::first();
         $response = $smtp->verifySmtp();
 
         if ($response['success']) {
             Notification::route('mail', $this->lead->client_email)->notify(new SendLeadEmail('Notification',$request->sms_text));
-			$this->saveEmailHistory($this->lead,$request,$smtp,'delivered');
+            $this->saveEmailHistory($this->lead,$request,$smtp,'delivered');
             return Reply::success('E-mail was sent successfully');
         }
-		$this->saveEmailHistory($this->lead,$request,$smtp,'undelivered');
+        $this->saveEmailHistory($this->lead,$request,$smtp,'undelivered');
         return Reply::error($response['message']);
-	}
-	
-	public function saveEmailHistory($lead,$request,$smtp,$status = 'delivered'){
-		
-		$leademailhistory 				= new LeadEmailHistory();
-		$leademailhistory->lead_id 		= $this->lead->id;
-        $leademailhistory->direction	= 'outbound';
-        $leademailhistory->from 		= $smtp->mail_username;
-        $leademailhistory->to 			= $lead->client_email;
-        $leademailhistory->body 		= $request->sms_text;
-        $leademailhistory->status 		= $status;
-        $leademailhistory->Datesent 	= gmdate("Y-m-d H:i:s");
-		$leademailhistory->save();
-	}
-	
-	/**
+    }
+    
+    public function saveEmailHistory($lead,$request,$smtp,$status = 'delivered'){
+        
+        $leademailhistory               = new LeadEmailHistory();
+        $leademailhistory->lead_id      = $this->lead->id;
+        $leademailhistory->direction    = 'outbound';
+        $leademailhistory->from         = $smtp->mail_username;
+        $leademailhistory->to           = $lead->client_email;
+        $leademailhistory->body         = $request->sms_text;
+        $leademailhistory->status       = $status;
+        $leademailhistory->Datesent     = gmdate("Y-m-d H:i:s");
+        $leademailhistory->save();
+    }
+    
+    /**
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -570,20 +570,24 @@ class LeadController extends AdminBaseController
      */
     public function contactStore(\App\Http\Requests\Contact\StoreRequest $request)
     {
-        $followUp = new LeadContact();
-        $followUp->lead_id = $request->lead_id;
-        $followUp->contact_date = Carbon::createFromFormat($this->global->date_format, $request->contact_date)->format('Y-m-d h:i:s');;
-        $followUp->agent_id = Auth::user()->id;
-        $followUp->save();
+        $contact = LeadContact::where('lead_id', $request->lead_id)->where('agent_id', Auth::user()->id)->get();
+        if(count($contact)) {
+            $contact = LeadContact::where('lead_id', $request->lead_id)->where('agent_id', Auth::user()->id)
+                ->update(['contact_date' => Carbon::createFromFormat($this->global->date_format, $request->contact_date)->format('Y-m-d h:i:s')]);
+        } else {
+            $contact = new LeadContact();
+            $contact->lead_id = $request->lead_id;
+            $contact->contact_date = Carbon::createFromFormat($this->global->date_format, $request->contact_date)->format('Y-m-d h:i:s');
+            $contact->agent_id = Auth::user()->id;
+            $contact->save();
+        }
+        
         $this->lead = Lead::findOrFail($request->lead_id);
 
         $url = route('admin.leads.index');
 
         return Reply::redirect($url);
 
-        // $view = view('admin.lead.followup.task-list-ajax', $this->data)->render();
-
-        // return Reply::successWithData(__('messages.leadFollowUpAddedSuccess'), ['html' => $view]);
     }
 
     public function followUpShow($leadID)

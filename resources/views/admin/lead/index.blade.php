@@ -50,7 +50,7 @@
 @section('content')
 
         <div class="row">
-		<div class="col-12 col-lg-6 col-xl-3 justify-content-center">
+        <div class="col-12 col-lg-6 col-xl-3 justify-content-center">
                 <div class="card card-border-color card-border-color-success">
                     <div class="card-header">@lang('modules.dashboard.totalLeads')</div>
                     <div class="card-body"><span class="badge badge-pill badge-secondary">{{ $totalLeads }}</span></div>

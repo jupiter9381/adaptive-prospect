@@ -120,7 +120,7 @@ class LeadsDataTable extends BaseDataTable
         $lead = Lead::select('leads.id', 'leads.client_id', 'leads.next_follow_up', 'client_name', 'company_name', 'lead_status.type as statusName', 'status_id', 'leads.created_at', 'lead_sources.type as source', 'lead_contacts.contact_date as contact_date', \DB::raw("(select next_follow_up_date from lead_follow_up where lead_id = leads.id and leads.next_follow_up  = 'yes' and DATE(next_follow_up_date) >= {$currentDate} ORDER BY next_follow_up_date asc limit 1) as next_follow_up_date"))
             ->leftJoin('lead_status', 'lead_status.id', 'leads.status_id')
             ->leftJoin('lead_sources', 'lead_sources.id', 'leads.source_id')
-            ->join('lead_contacts', 'lead_contacts.lead_id', 'leads.id');
+            ->leftJoin('lead_contacts', 'lead_contacts.lead_id', 'leads.id');
         if ($this->request()->followUp != 'all' && $this->request()->followUp != '') {
             $lead = $lead->leftJoin('lead_follow_up', 'lead_follow_up.lead_id', 'leads.id')
                 ->where('leads.next_follow_up', 'yes')
