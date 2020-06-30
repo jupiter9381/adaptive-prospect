@@ -90,16 +90,17 @@ class LeadsDataTable extends BaseDataTable
                 $date2 = strtotime($row->next_follow_up_date);
                 if($row->contact_date == "") return "";
                 else {
+                    $date = Carbon::parse($row->next_follow_up_date)->format($this->global->date_format);
                     $hours = floor(abs($date2 - $date1)/(60*60));
                     $status = "";
                     if($hours <= 24) {
-                        return '<span class="badge badge-success" style="width: 75px;">' . __('Normal') . '</span>';
+                        return '<span class="badge badge-success" style="width: 75px;">' . $date . '</span>';
                     } 
                     if($hours > 24 && $hours <= 48) {
-                        return '<span class="badge badge-warning" style="width: 75px;">' . __('Warning') . '</span>';
+                        return '<span class="badge badge-warning" style="width: 75px;">' . $date . '</span>';
                     }
                     if($hours > 48 ) {
-                        return '<span class="badge badge-danger" style="width: 75px;">' . __('Danger') . '</span>';
+                        return '<span class="badge badge-danger" style="width: 75px;">' . $date . '</span>';
                     }
                 }
             })
@@ -108,16 +109,17 @@ class LeadsDataTable extends BaseDataTable
                 $date2 = strtotime($row->contact_date);
                 if($row->contact_date == "") return "";
                 else {
+                    $date = Carbon::parse($row->contact_date)->format($this->global->date_format);
                     $hours = floor(abs($date2 - $date1)/(60*60));
                     $status = "";
                     if($hours <= 24) {
-                        return '<span class="badge badge-success" style="width: 75px;">' . __('Normal') . '</span>';
+                        return '<span class="badge badge-success" style="width: 75px;">' . $date . '</span>';
                     } 
                     if($hours > 24 && $hours <= 48) {
-                        return '<span class="badge badge-warning" style="width: 75px;">' . __('Warning') . '</span>';
+                        return '<span class="badge badge-warning" style="width: 75px;">' . $date . '</span>';
                     }
                     if($hours > 48 ) {
-                        return '<span class="badge badge-danger" style="width: 75px;">' . __('Danger') . '</span>';
+                        return '<span class="badge badge-danger" style="width: 75px;">' . $date . '</span>';
                     }
                 }
                 
